@@ -1,6 +1,6 @@
 ---
 name: start-of-day
-description: "Ticket-to-PR workflow for the user's assigned work: picks an incident or ticket (incidents first, by priority), makes sure there's a ticket for it, implements the change on a branch named after the ticket, opens a PR, and monitors it through CI and review. Use it whenever the user says \"let's start the day\", \"pick up a ticket\", \"work on <TICKET-KEY>\" or \"look at incident <ID>\", or asks to take any assigned ticket or incident into work, even if they don't name the skill. Arguments: none (show the picker), a ticket key or incident ID (skip the picker), and optionally --dry-run (plan only, no writes). Config lives in ~/.claude/start-of-day/config.json; on first use it asks for it."
+description: "Ticket-to-PR workflow for the user's assigned work: picks an incident or ticket (incidents first, by priority), makes sure there's a ticket for it, implements the change on a branch named after the ticket, opens a PR, and monitors it through CI and review. Use it whenever the user says \"let's start the day\", \"pick up a ticket\", \"work on <TICKET-KEY>\" or \"look at incident <ID>\", or asks to take any assigned ticket or incident into work, even if they don't name the skill. Arguments: none (show the picker), a ticket key or incident ID (skip the picker), optionally --parent <session> (report back to an orchestrator) and --dry-run (plan only, no writes). Config lives in ~/.claude/start-of-day/config.json; on first use it asks for it."
 ---
 
 # Start of Day
@@ -11,6 +11,7 @@ Arguments: `$ARGUMENTS`
 
 - *(empty)* → show the picker (step 1).
 - `<TICKET-KEY>` or `<INCIDENT-ID>` → skip the picker and work on that item.
+- `--parent <session>` → this session was started by an orchestrator (e.g. `ticket-autopilot`). Report to it as described in step 6. Ignore it in a dry run.
 - `--dry-run` (with or without an item) → do every read step and present the plan, but don't write anything: no Jira/incident changes, no branches, commits, pushes, PRs, Slack posts or crons. Say clearly at the end that it was a dry run.
 
 ## Configuration
@@ -73,6 +74,7 @@ Then present a short plan (what, where, how you'll verify) and proceed without w
 - Push the branch and open the PR without asking. Title: `{pr_title_format}`.
 - Don't move the ticket to the review status yet; step 7 does that once the PR is ready.
 - Tell the user the PR is open (see **Reaching the user**).
+- If started with `--parent <session>`: `SendMessage` that session `START-OF-DAY PR-OPEN <KEY> <PR_URL>`. That tells it implementation is done and this session is only watching the PR now. If you stop early instead (blocked, or the readiness check sent questions that went unanswered), send `START-OF-DAY BLOCKED <KEY> <one-line reason>`.
 
 ## Step 7 — Monitor the PR
 

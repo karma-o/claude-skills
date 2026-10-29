@@ -11,6 +11,9 @@ skills/
 ├── start-of-day/
 │   ├── SKILL.md
 │   └── references/       # incidents.md, pr-monitoring.md, config.md
+├── ticket-autopilot/
+│   ├── SKILL.md
+│   └── autopilot.md      # per-pass steps, read once at boot
 └── slack-relay/
     ├── SKILL.md
     ├── relay.md          # per-turn relay steps, read once at boot
@@ -35,6 +38,18 @@ Takes one piece of assigned work from "assigned to me" to "PR approved". Trigger
 Layout: `SKILL.md` holds the workflow; `references/` holds incident handling, PR monitoring and the config keys, read only when needed.
 
 **First-time setup:** asks for your team-specific values (ticket project and statuses, repo folders, GitHub orgs, review channel, etc.) and saves them to `~/.claude/start-of-day/config.json`. Nothing specific to you lives in the skill itself.
+
+### `ticket-autopilot`
+Keeps your assigned work moving. Run `claude --bg -n ticket-autopilot "/ticket-autopilot boot"` from a trusted directory.
+
+**What it does:**
+1. Once right away and then every hour, it builds the same list as the `start-of-day` picker: incidents first, then tickets, by priority.
+2. It skips anything already in work: a live session named after the item, or a PR or branch for it.
+3. It starts `claude --bg -n <KEY> "/start-of-day <KEY> --parent ticket-autopilot"` for the top items, up to 3 in the implementation phase at once.
+4. Workers report "PR open" (or "blocked"), which frees their slot, and the next item starts immediately.
+5. There's no state file: everything is worked out from live sessions, PRs and ticket statuses. The autopilot only messages you when something breaks; each worker tells you about its own pickup, plan and questions.
+
+`/ticket-autopilot run --dry-run` shows what a pass would start.
 
 ### `slack-relay`
 Reach you on your phone through Slack while you're away from the terminal, and route your answers back to the Claude Code sessions that asked.
