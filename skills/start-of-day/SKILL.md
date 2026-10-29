@@ -57,7 +57,7 @@ Then present a short plan (what, where, how you'll verify) and proceed without w
 
 1. Search each of `{repos_roots}` (and one level of subfolders) for the repo. Check whether it has been moved into a monorepo: a repo with a README or redirect saying so, or a directory of that name inside a bigger repo.
 2. Not found locally → search `{github_orgs}`. Use the `gh` CLI if the GitHub MCP can't see an org.
-3. Needs cloning → give the user the SSH clone command; don't clone yourself.
+3. Needs cloning → clone it yourself over SSH (`git clone git@github.com:<org>/<repo>.git`) into `{clone_root}` (default: the first of `{repos_roots}`), keeping any sub-folder layout the user already uses for related repos. In a dry run, only show the command.
 4. Before branching: confirm `origin` points at the expected remote, then `git checkout <default branch> && git pull`.
 5. If the change spans several repos, repeat for each one; they all use the same branch name.
 
