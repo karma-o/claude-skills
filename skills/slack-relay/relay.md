@@ -2,7 +2,7 @@
 
 The steps for one relay turn. `boot` reads this file once; each loop tick then runs these steps from context. Re-read this file only if its steps are no longer in your context (e.g. after compaction). Config, state and message formats are described in `SKILL.md` next to this file.
 
-Each relay turn (a loop tick **or** an incoming peer message) does all of this, then ends with `ScheduleWakeup`.
+Each relay turn (a loop tick **or** an incoming peer message) does all of this, then ends with `ScheduleWakeup`. Steps 1–2 (`ListAgents`, session registry) run on **every** turn, including quiet ones; they're how new sessions get their `WHOAMI`. A quiet channel is no reason to skip them.
 
 1. **Claim / heartbeat.** Get your session name from `ListAgents` ("This session is ..."). If `state.relay.session` is another session with a heartbeat younger than 30 min and it still appears in `ListAgents`, stop: tell the user a relay is already running and end the loop. Otherwise write your name and the current time as the heartbeat.
 
