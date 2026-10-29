@@ -12,6 +12,7 @@ skills/
 │   └── SKILL.md
 └── slack-relay/
     ├── SKILL.md
+    ├── relay.md          # per-turn relay steps, read once at boot
     └── scripts/ping.sh
 ```
 
