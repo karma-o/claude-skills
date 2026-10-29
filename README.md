@@ -2,6 +2,25 @@
 
 Personal Claude Code skills for daily development workflow.
 
+## Layout
+
+Each skill lives in its own directory under `skills/`, with a `SKILL.md` entry point and any helper files next to it:
+
+```
+skills/
+├── start-of-day/
+│   └── SKILL.md
+└── slack-relay/
+    ├── SKILL.md
+    └── scripts/ping.sh
+```
+
+To use a skill without installing the repo as a plugin, symlink its directory into `~/.claude/skills/`:
+
+```bash
+ln -s "$PWD/skills/slack-relay" ~/.claude/skills/slack-relay
+```
+
 ## Skills
 
 ### `start-of-day`
