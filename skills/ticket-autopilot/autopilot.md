@@ -12,7 +12,7 @@ Keep passes small. This session runs all day, and everything a pass reads stays 
 
 3. **Sessions.** `claude agents --json` → live sessions (`name`, `status`, `pid`). Match them to items by name: the ticket key or the incident ID. For how long a session has been idle, read `statusUpdatedAt` (epoch ms) from `~/.claude/sessions/<pid>.json`. If that's unavailable, treat any idle pre-PR session as waiting on the user.
 
-4. **PRs and branches.** For each item's ticket key, look for open or merged PRs and branches mentioning it across the `start-of-day` `github_orgs` (e.g. `gh search prs "<KEY>" --owner <org> --json url,state,title`). Batch per org where possible.
+4. **PRs.** For each item's ticket key and incident ID, look for PRs mentioning it across the `start-of-day` `github_orgs` (e.g. `gh search prs "<KEY>" --owner <org> --json url,state,title`). Batch per org where possible. Only **open** PRs block a start; merged ones are passed on as context (step 6).
 
 5. **Classify each item** using the table in `SKILL.md`: skip / watching the PR / waiting on the user / implementing / free to start.
 
@@ -20,6 +20,7 @@ Keep passes small. This session runs all day, and everything a pass reads stays 
    ```bash
    claude --bg -n <ID> "/start-of-day <ID> --parent <this session's name>"
    ```
+   If the item has merged PRs, append them to the prompt (`… --parent <name> (merged PRs: <url>, <url>)`) so the session starts by checking whether anything is left.
    `<ID>` is the ticket key, or the incident ID if no ticket exists yet. Check the output for the `backgrounded` line. If it fails (e.g. "Workspace not trusted"), report it (step 8) and don't retry this pass.
 
 7. **Worker messages.** On `START-OF-DAY PR-OPEN` or `BLOCKED` from a worker, run steps 1–6 again right away; that's how a freed slot gets reused without waiting for the next hourly pass. Nothing else is needed for them.

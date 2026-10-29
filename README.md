@@ -44,7 +44,7 @@ Keeps your assigned work moving. Run `claude --bg -n ticket-autopilot "/ticket-a
 
 **What it does:**
 1. Once right away and then every hour, it builds the same list as the `start-of-day` picker: incidents first, then tickets, by priority.
-2. It skips anything already in work: a live session named after the item, or a PR or branch for it.
+2. It skips anything already in work: a live session named after the item, or an open PR for it. Merged PRs don't count as done; the session checks whether anything is left or whether the item just needs closing.
 3. It starts `claude --bg -n <KEY> "/start-of-day <KEY> --parent ticket-autopilot"` for the top items, up to 3 in the implementation phase at once.
 4. Workers report "PR open" (or "blocked"), which frees their slot, and the next item starts immediately.
 5. There's no state file: everything is worked out from live sessions, PRs and ticket statuses. The autopilot only messages you when something breaks; each worker tells you about its own pickup, plan and questions.

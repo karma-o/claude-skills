@@ -50,6 +50,7 @@ Decide whether you can finish this without the user. Proceed on your own only if
 - the goal and acceptance criteria are clear from the ticket, incident and comments;
 - you have the tools and access it needs (repos, environments, credentials, MCPs);
 - no decision is left open (design choices, scope, which team owns it);
+- it isn't already done: if merged PRs exist for this item, check what they covered. If nothing is left, the plan is to verify and then propose the status update or closure to the user (don't change incident state yourself).
 - nothing irreversible or outward-facing is involved beyond the normal branch → PR flow.
 
 Then present a short plan (what, where, how you'll verify) and proceed without waiting. If anything fails the check, ask the specific questions (see **Reaching the user**). Don't guess on open decisions. Infra, config and communication changes usually fail the "no open decision" test; say why when you flag them.

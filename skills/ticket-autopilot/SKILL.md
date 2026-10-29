@@ -53,7 +53,8 @@ There's no state file. Every pass works it out from live data:
 | Signal | Meaning |
 |---|---|
 | A live session named after the item (`<TICKET-KEY>` or `<INCIDENT-ID>`) | Someone is on it. Don't start another session. |
-| An open or merged PR mentioning the ticket key, or a branch named after it | Work has started (by a session or by the user). Skip it. |
+| An **open** PR mentioning the item's key/ID | Work is under way (by a session or by the user). Skip it. |
+| Only **merged** PRs, no live session | Not proof the work is finished: there may be leftovers, or the ticket/incident may just need closing. Start a session; its readiness check works out which and asks the user. |
 | A live session for the item **and** a PR | Implementation is done; the session is only watching the PR. Doesn't count toward `max_parallel`. |
 | A live session for the item, no PR, idle ≥ `waiting_after_minutes` | Waiting on the user. Doesn't count toward `max_parallel`. |
 | A live session for the item, no PR, busy or recently active | Implementing. Counts toward `max_parallel`. |
