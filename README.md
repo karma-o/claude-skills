@@ -37,7 +37,7 @@ Add this repo as a Claude Code skill source in your `~/.claude/settings.json`:
   "extraKnownMarketplaces": {
     "personal-skills": {
       "source": "git",
-      "url": "git@public-github:karma-o/claude-skills.git"
+      "url": "git@github.com:karma-o/claude-skills.git"
     }
   }
 }
