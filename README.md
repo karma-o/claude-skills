@@ -9,7 +9,8 @@ Each skill lives in its own directory under `skills/`, with a `SKILL.md` entry p
 ```
 skills/
 ├── start-of-day/
-│   └── SKILL.md
+│   ├── SKILL.md
+│   └── references/       # incidents.md, pr-monitoring.md, config.md
 └── slack-relay/
     ├── SKILL.md
     ├── relay.md          # per-turn relay steps, read once at boot
@@ -21,16 +22,19 @@ The repo is also a Claude Code plugin marketplace (`.claude-plugin/`) offering o
 ## Skills
 
 ### `start-of-day`
-A full ticket-to-PR workflow triggered by saying "let's start the day" or `/start-of-day`.
+Takes one piece of assigned work from "assigned to me" to "PR approved". Triggered by "let's start the day", `/start-of-day`, `/start-of-day <TICKET-KEY|INCIDENT-ID>`, or `--dry-run` to plan without writing anything.
 
 **What it does:**
-1. Fetches your In Progress Jira tickets and asks which to work on
-2. Analyzes the ticket and implements autonomously (code-only) or asks for input (infra/config)
-3. Finds or clones the repo, creates a branch, commits implementation + tests + formatting
-4. Opens a PR and moves the Jira ticket to Verify
-5. Monitors the PR for 2 hours — fixes CI failures and review comments autonomously, asks for your approval before posting a Slack review request
+1. Lists your open incidents (by priority) and then your tickets, and suggests one. It skips this step when given a key.
+2. For an incident: reads it, its chat thread and related PRs, then finds or creates the ticket that resolves it and moves it to in-progress.
+3. Readiness check: proceeds on its own when the goal, tools and decisions are all clear; otherwise asks.
+4. Finds the repo (including monorepo moves), branches after the ticket key, and commits implementation, tests and formatting separately, with a green build before pushing.
+5. Opens the PR and watches it: fixes CI and review comments (human and bot), moves the ticket to review when ready, asks before posting the review request, and announces approval.
+6. Reaches you where you are. If you're at the machine (keyboard/mouse idle time), it uses `say` and the terminal; otherwise it goes through `slack-relay` on Slack, with one ping when it picks something up and the plan in the same thread.
 
-**First-time setup:** On first use, you'll be asked for your team-specific config (Jira board URL, GitHub org, Slack channel, timezone, etc.). Answers are saved to memory and reused in future sessions — you won't be asked again.
+Layout: `SKILL.md` holds the workflow; `references/` holds incident handling, PR monitoring and the config keys, read only when needed.
+
+**First-time setup:** asks for your team-specific values (ticket project and statuses, repo folders, GitHub orgs, review channel, etc.) and saves them to `~/.claude/start-of-day/config.json`. Nothing specific to you lives in the skill itself.
 
 ### `slack-relay`
 Reach you on your phone through Slack while you're away from the terminal, and route your answers back to the Claude Code sessions that asked.

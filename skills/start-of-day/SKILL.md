@@ -1,90 +1,79 @@
 ---
 name: start-of-day
-description: "Full ticket-to-PR workflow: pick a Jira ticket, implement it, open a PR, and monitor it through review. On first use, prompts for team-specific config (Jira board, GitHub org, Slack channel, etc.) and saves it to memory for future sessions."
+description: "Ticket-to-PR workflow for the user's assigned work: picks an incident or ticket (incidents first, by priority), makes sure there's a ticket for it, implements the change on a branch named after the ticket, opens a PR, and monitors it through CI and review. Use it whenever the user says \"let's start the day\", \"pick up a ticket\", \"work on <TICKET-KEY>\" or \"look at incident <ID>\", or asks to take any assigned ticket or incident into work, even if they don't name the skill. Arguments: none (show the picker), a ticket key or incident ID (skip the picker), and optionally --dry-run (plan only, no writes). Config lives in ~/.claude/start-of-day/config.json; on first use it asks for it."
 ---
 
-# Start of Day Workflow
+# Start of Day
 
-A guided workflow for picking up a Jira ticket, implementing it, opening a PR, and monitoring it through review.
+Take one piece of assigned work from "assigned to me" to "PR approved", asking the user only when a real decision is needed.
+
+Arguments: `$ARGUMENTS`
+
+- *(empty)* → show the picker (step 1).
+- `<TICKET-KEY>` or `<INCIDENT-ID>` → skip the picker and work on that item.
+- `--dry-run` (with or without an item) → do every read step and present the plan, but don't write anything: no Jira/incident changes, no branches, commits, pushes, PRs, Slack posts or crons. Say clearly at the end that it was a dry run.
 
 ## Configuration
 
-On first use, if `skill_config_start_of_day` is not found in memory, ask the user for each value below and save them to memory as `skill_config_start_of_day`:
+Read `~/.claude/start-of-day/config.json`. If it's missing or lacks a key, read `references/config.md` and run its setup. Values below in `{braces}` come from that file. Never put user-, team- or company-specific values in this skill; they belong in the config.
 
-| Key | Question to ask |
-|---|---|
-| `jira_board_url` | What is your Jira board URL? (e.g. `https://jira.example.com/secure/RapidBoard.jspa?rapidView=12345`) |
-| `jira_project_key` | What is your Jira project key? (e.g. `NRH`) |
-| `jira_assignee_name` | What is your display name in Jira? (e.g. `Jane Smith`) |
-| `github_org` | What is your GitHub org or username for work repos? (e.g. `my-org`) |
-| `repos_root` | Where do your local repos live? (e.g. `~/Code/Work/`) |
-| `slack_review_channel_id` | What is the Slack channel ID for PR review requests? |
-| `slack_review_group_id` | What is the Slack user group ID to tag for reviews? (e.g. `S0123456789`) |
-| `user_email` | What is your work email address? |
-| `timezone` | What is your local timezone? (e.g. `Europe/Warsaw`) |
-| `build_command` | What is the build command for your projects? (e.g. `./gradlew build -x spotlessJava`) |
-| `test_command` | What is the test command? (e.g. `./gradlew test -x spotlessJava`) |
+## Reaching the user
 
-Once all values are collected, save them and proceed without asking again in future sessions.
+The user may be at the terminal or away. Decide each time you need them:
 
----
+1. **At the machine?** `ioreg -c IOHIDSystem | awk '/HIDIdleTime/ {print int($NF/1000000000); exit}'` gives seconds since the last keyboard/mouse input. Below `{away_after_seconds}` (default 300) → treat the user as present.
+2. **Present** → announce with `say "<short text>"` and ask in the terminal.
+3. **Away** → use the `slack-relay` skill's worker flow (an `ASK` or `NOTIFY` to the relay, or its direct mode if no relay is running). If that skill isn't available, ask in the terminal and wait.
 
-## Step 1 — Ticket selection
+When an item is **picked up while the user is away**: ping once with the item and a one-line summary, then post the plan as a reply in the same thread. If the plan has no open questions, carry on without waiting. If it has questions, ask them there and work on anything not blocked by them meanwhile.
 
-- Fetch tickets from the Jira board at `{jira_board_url}` assigned to `{jira_assignee_name}` with status **In Progress**
-- List them and ask: "Which ticket do you want to work on today?"
-- Wait for the user to pick one, then proceed
+## Step 1 — Pick the work
 
-## Step 2 — Ticket analysis
+Skip if an item was given as an argument.
 
-- Fetch the full ticket: description, comments, linked issues
-- Classify the work:
-  - **Code-only** → proceed autonomously: analyze, plan, implement without asking
-  - **Infra / config / communication** → flag explicitly, require user input before proceeding
-- For code-only: briefly present the plan, then proceed immediately without waiting for approval
-- Only pause when genuinely blocked or the change is irreversible and ambiguous
+1. Fetch in parallel:
+   - **Incidents** assigned to `{incident_assignee}` that aren't resolved or closed, using the incident tool in `{incident_source}` (see `references/incidents.md`).
+   - **Tickets** from `{jira_project_key}` assigned to `{jira_assignee}` with status in `{pick_statuses}`.
+2. Order: incidents first by priority (P1 → P4), then tickets by priority, then oldest first.
+3. Show one numbered list (`ID — title — priority — status`) and ask which one to take. Recommend the top item.
 
-## Step 3 — Repository setup
+## Step 2 — Make sure there's a ticket
 
-- Search locally under `{repos_root}` first
-- If not found: search `https://github.com/{github_org}`
-- If repo needs cloning: suggest the SSH clone command to the user — never run `git clone` yourself
+- **Ticket** → fetch it: description, comments, linked issues, attachments.
+- **Incident** → follow `references/incidents.md`. It finds or creates the ticket that resolves the incident and moves it to in-progress. From here on, the **ticket key** is the work item's key (branch, commits, PR title).
 
-## Step 4 — Implementation
+## Step 3 — Readiness check
 
-Before creating the branch:
-```
-git checkout main && git pull origin main
-```
-Then create a branch named exactly after the ticket key (e.g. `NRH-1234`).
+Decide whether you can finish this without the user. Proceed on your own only if all of these hold:
 
-Commit in this order, each as a separate commit:
-1. Implementation
-2. Tests
-3. Formatting / style (run `{build_command}` to verify it passes)
+- the goal and acceptance criteria are clear from the ticket, incident and comments;
+- you have the tools and access it needs (repos, environments, credentials, MCPs);
+- no decision is left open (design choices, scope, which team owns it);
+- nothing irreversible or outward-facing is involved beyond the normal branch → PR flow.
 
-Build must pass before pushing.
+Then present a short plan (what, where, how you'll verify) and proceed without waiting. If anything fails the check, ask the specific questions (see **Reaching the user**). Don't guess on open decisions. Infra, config and communication changes usually fail the "no open decision" test; say why when you flag them.
 
-## Step 5 — Push & Jira update
+## Step 4 — Repository setup
 
-- Push branch and open PR — no approval needed
-- Check available Jira transitions, then move ticket to the equivalent of **Verify** status
+1. Search each of `{repos_roots}` (and one level of subfolders) for the repo. Check whether it has been moved into a monorepo: a repo with a README or redirect saying so, or a directory of that name inside a bigger repo.
+2. Not found locally → search `{github_orgs}`. Use the `gh` CLI if the GitHub MCP can't see an org.
+3. Needs cloning → give the user the SSH clone command; don't clone yourself.
+4. Before branching: confirm `origin` points at the expected remote, then `git checkout <default branch> && git pull`.
+5. If the change spans several repos, repeat for each one; they all use the same branch name.
 
-## Step 6 — PR monitoring (2 hours)
+## Step 5 — Implement
 
-Immediately after the PR is created, set up two crons (CronCreate is only available in the main session):
+- Branch named exactly after the ticket key (e.g. `ABC-123`).
+- Commit in this order, as separate commits: implementation, tests, formatting/style.
+- Run `{build_command}` (use the repo's own build if it differs) and make sure it passes before pushing.
+- Stage files explicitly; never `git add -A` or `git add .`. Never commit secrets, `.env` files or logs.
 
-**Recurring 10-min cron** — prompt should:
-1. Check in parallel: review comments, CI status (`gh pr checks {PR_NUMBER}`), reviews/approvals
-2. **Unresolved review comments** → obvious fix: fix, commit, push; ambiguous: investigate first, ask user only if truly stuck
-3. **Failing CI** → investigate, fix, commit, push autonomously
-4. **All CI green AND all comments resolved** → ask the user: "CI is green and all comments are resolved on {TICKET_KEY} — ok to post the Slack review request?"
-   → Only after user says yes: post once to `{slack_review_channel_id}`:
-   `<!subteam^{slack_review_group_id}> please have a look at *<{PR_URL}|{TICKET_KEY}: {PR_TITLE}>*`
-5. **PR approved** → run: `say "PR for {TICKET_KEY} has been approved"`
+## Step 6 — Push and open the PR
 
-**One-shot expiry cron** — fires 2 hours after PR creation:
-- GitHub `created_at` is UTC. Convert to local time using `{timezone}` offset, then add 2 hours to get the cron time.
-- Example (Warsaw CEST = UTC+2): `created_at=17:28Z` → local 19:28 → expiry 21:28 → cron `28 21 13 8 *`
-- Never use the UTC hour directly as the local cron hour.
-- When it fires: use CronList to find the recurring cron, then CronDelete it.
+- Push the branch and open the PR without asking. Title: `{pr_title_format}`.
+- Don't move the ticket to the review status yet; step 7 does that once the PR is ready.
+- Tell the user the PR is open (see **Reaching the user**).
+
+## Step 7 — Monitor the PR
+
+Follow `references/pr-monitoring.md`: CI and review comments are handled on your own, the ticket moves to `{review_status}` when ready, the review request is posted only after the user agrees, and the user is told when the PR is approved.

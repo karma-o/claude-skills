@@ -99,7 +99,7 @@ Sessions address each other by name (`ListAgents` shows it, `SendMessage` uses i
   "relay": { "session": "code-89", "heartbeat": "2026-10-29T00:30:00Z" },
   "channel_cursor": "1793229680.735539",
   "sessions": {
-    "code-b5": { "label": "NRH-123", "summary": "telescope-api: fixing export pagination", "updated": "2026-10-29T00:20:00Z" },
+    "code-b5": { "label": "NRH-123", "summary": "orders-api: fixing export pagination", "updated": "2026-10-29T00:20:00Z" },
     "code-c1": { "label": null, "summary": null, "whoami_sent": "2026-10-29T00:25:00Z" }
   },
   "threads": [
