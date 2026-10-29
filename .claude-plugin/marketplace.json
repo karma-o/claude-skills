@@ -1,0 +1,15 @@
+{
+  "name": "personal-skills",
+  "description": "Personal Claude Code skills for daily development workflow.",
+  "owner": {
+    "name": "Vadym Turchenko"
+  },
+  "plugins": [
+    {
+      "name": "dev-workflow",
+      "description": "Personal Claude Code skills: start-of-day (Jira ticket to PR workflow) and slack-relay (two-way Slack bridge between your phone and Claude Code sessions).",
+      "source": "./",
+      "category": "productivity"
+    }
+  ]
+}

@@ -15,11 +15,7 @@ skills/
     └── scripts/ping.sh
 ```
 
-To use a skill without installing the repo as a plugin, symlink its directory into `~/.claude/skills/`:
-
-```bash
-ln -s "$PWD/skills/slack-relay" ~/.claude/skills/slack-relay
-```
+The repo is also a Claude Code plugin marketplace (`.claude-plugin/`) offering one plugin, `dev-workflow`, that bundles all of `skills/`. See **Installation**.
 
 ## Skills
 
@@ -49,17 +45,18 @@ Reach you on your phone through Slack while you're away from the terminal, and r
 
 ## Installation
 
-Add this repo as a Claude Code skill source in your `~/.claude/settings.json`:
+**As a plugin** (all skills, auto-updated from GitHub):
 
-```json
-{
-  "extraKnownMarketplaces": {
-    "personal-skills": {
-      "source": "git",
-      "url": "git@github.com:karma-o/claude-skills.git"
-    }
-  }
-}
+```
+/plugin install dev-workflow --marketplace karma-o/claude-skills
 ```
 
-Then install via `/marketplace` or by enabling it in Claude Code settings.
+Skills installed this way are namespaced: `/dev-workflow:start-of-day`, `/dev-workflow:slack-relay boot`, etc.
+
+**Single skill, from a local clone** (unprefixed names, edits take effect immediately):
+
+```bash
+ln -s "$PWD/skills/slack-relay" ~/.claude/skills/slack-relay
+```
+
+Use one or the other for a given skill, not both, or it will show up twice.

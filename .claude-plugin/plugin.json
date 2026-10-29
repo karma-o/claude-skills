@@ -1,0 +1,8 @@
+{
+  "name": "dev-workflow",
+  "description": "Personal Claude Code skills: start-of-day (Jira ticket to PR workflow) and slack-relay (two-way Slack bridge between your phone and Claude Code sessions).",
+  "author": {
+    "name": "Vadym Turchenko"
+  },
+  "version": "1.0.0"
+}

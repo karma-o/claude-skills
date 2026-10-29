@@ -17,7 +17,7 @@ worker C ─┘                                           └─◄ polls channe
 
 Arguments: `$ARGUMENTS`
 
-- `boot` → start the relay: if `config.json` is missing, run **Setup** first; then invoke the `loop` skill (Skill tool) with args `/slack-relay tick`, so each loop iteration runs one relay turn. Do nothing else in this turn.
+- `boot` → start the relay: if `config.json` is missing, run **Setup** first; then invoke the `loop` skill (Skill tool) with args `/<this skill> tick`, so each loop iteration runs one relay turn. `<this skill>` is the name this skill was invoked under: `slack-relay` when symlinked into `~/.claude/skills`, `dev-workflow:slack-relay` when installed as a plugin. Do nothing else in this turn.
 - `tick` → one relay turn (see **Relay**). Normally only called by the loop that `boot` starts.
 - `ask <question>` → you are a worker; ask the user (see **Worker**).
 - `status` → print config summary (without the webhook URL), relay liveness, known sessions and open threads from the state file.
@@ -182,7 +182,7 @@ Each relay turn (a loop tick **or** an incoming peer message) does all of this, 
    - Do a quick check: steps 3, 5 and 6 only. Read the channel since `channel_cursor` and only the threads with activity in the last 5 min.
    - Any new user message or peer reply resets the 5-min window. Leave the loop once 5 min pass with no new activity.
    - Save `state.json` after every check that changed anything, so an interrupted turn loses nothing.
-10. **Schedule.** `ScheduleWakeup` with prompt `/slack-relay tick` and `delaySeconds: <idle_poll_seconds>` (default 270: just under 5 min, keeps the prompt cache warm; minimum 60). Mark `noop: true` when nothing changed.
+10. **Schedule.** `ScheduleWakeup` with prompt `/<this skill> tick` (same name as in `boot`) and `delaySeconds: <idle_poll_seconds>` (default 270: just under 5 min, keeps the prompt cache warm; minimum 60). Mark `noop: true` when nothing changed.
 
 Relay rules:
 - Never answer on the user's or a session's behalf, never paraphrase, never invent context. Forward verbatim in both directions.
