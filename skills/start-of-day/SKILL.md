@@ -57,7 +57,7 @@ Then present a short plan (what, where, how you'll verify) and proceed without w
 
 ## Step 4 — Repository setup
 
-1. Search each of `{repos_roots}` (and one level of subfolders) for the repo. Check whether it has been moved into a monorepo: a repo with a README or redirect saying so, or a directory of that name inside a bigger repo.
+1. Search each of `{repos_roots}` for the repo, `{repos_search_depth}` levels deep (default 4), because repos are often grouped in sub-folders: `find <root> -maxdepth <depth> -name .git -prune 2>/dev/null | sed 's#/\.git$##'`. Match the directory name case-insensitively, or the `origin` URL for repos renamed on the server. If several clones match, use the one whose `origin` is the live (non-archived) repo and mention the duplicates to the user. Check whether it has been moved into a monorepo: a repo with a README or redirect saying so, or a directory of that name inside a bigger repo.
 2. Not found locally → search `{github_orgs}`. Use the `gh` CLI if the GitHub MCP can't see an org.
 3. Needs cloning → clone it yourself over SSH (`git clone git@github.com:<org>/<repo>.git`) into `{clone_root}` (default: the first of `{repos_roots}`), keeping any sub-folder layout the user already uses for related repos. In a dry run, only show the command.
 4. Before branching: confirm `origin` points at the expected remote, then `git checkout <default branch> && git pull`.

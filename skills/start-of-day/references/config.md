@@ -19,6 +19,7 @@ If the file is missing, or a required key is missing, ask the user for the missi
 | `incident_ticket_type` | no | Issue type for incident tickets | `Bug` |
 | `incident_ticket_defaults` | no | Extra fields for incident tickets (labels, components) | `{"labels": ["incident"]}` |
 | `repos_roots` | yes | Local folders that hold repos | `["~/code/work"]` |
+| `repos_search_depth` | no | How many folder levels below each root to search for repos (default 4) | `4` |
 | `clone_root` | no | Where to clone repos that aren't local yet (default: first of `repos_roots`) | `~/code/work` |
 | `github_orgs` | yes | GitHub orgs to search for repos/PRs | `["my-org", "my-org-sandbox"]` |
 | `build_command` | yes | Default build/verify command | `./gradlew build` |
