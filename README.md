@@ -16,6 +16,18 @@ A full ticket-to-PR workflow triggered by saying "let's start the day" or `/star
 
 **First-time setup:** On first use, you'll be asked for your team-specific config (Jira board URL, GitHub org, Slack channel, timezone, etc.). Answers are saved to memory and reused in future sessions — you won't be asked again.
 
+### `slack-relay`
+Reach you on your phone through Slack while you're away from the terminal, and route your answers back to the Claude Code sessions that asked.
+
+**What it does:**
+1. One dedicated session becomes the relay: `/slack-relay boot` (or straight from the shell: `claude "/slack-relay boot"`)
+2. The relay asks every running session what it's working on, keeps a registry of them, and tells each session how to reach you through it, so work sessions need no extra setup, memory or CLAUDE.md
+3. Worker sessions blocked on a decision send their question to the relay (`/slack-relay ask <question>`), or ping Slack directly if no relay is running
+4. The relay posts each question through a Slack webhook workflow, which @mentions you, so your phone gets a push (posts made through the Slack MCP appear as you and never notify you)
+5. It reads the channel and threads every ~5 min by default (configurable down to 1 min), and forwards your messages verbatim. Within 5 min of any new message from you or a session, it switches to checking every 30 s, so a live back-and-forth stays quick. Thread replies go to whoever owns the thread. New top-level messages are routed by an explicit `NRH-123: ...` / `code-b5: ...` prefix, or by matching the content against the registry; if it's unclear, the relay asks you which session you mean. Sessions reply through the relay into the same thread. You can also ask for `status`
+
+**First-time setup:** `/slack-relay setup` asks for the channel and the webhook URL, and walks you through creating the webhook workflow in Slack Workflow Builder. Config lives in `~/.claude/slack-relay/config.json` (chmod 600, since the webhook URL is a secret).
+
 ## Installation
 
 Add this repo as a Claude Code skill source in your `~/.claude/settings.json`:
