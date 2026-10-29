@@ -17,7 +17,7 @@ worker C ─┘                                           └─◄ polls channe
 
 Arguments: `$ARGUMENTS`
 
-- `boot` → start the relay: if `config.json` is missing, run **Setup** first; then invoke the `loop` skill (Skill tool) with args `/<this skill> tick`, so each loop iteration runs one relay turn. `<this skill>` is the name this skill was invoked under: `slack-relay` when symlinked into `~/.claude/skills`, `dev-workflow:slack-relay` when installed as a plugin. Do nothing else in this turn.
+- `boot` → start the relay: if `config.json` is missing, run **Setup** first. Then check the session name (see **Session names**): if `ListAgents` shows another live session already called `relay_name`, stop and tell the user; if this session isn't called `relay_name`, tell the user once to run `/rename <relay_name>` (you can't rename yourself) and carry on. Then invoke the `loop` skill (Skill tool) with args `/<this skill> tick`, so each loop iteration runs one relay turn. `<this skill>` is the name this skill was invoked under: `slack-relay` when symlinked into `~/.claude/skills`, `dev-workflow:slack-relay` when installed as a plugin. Do nothing else in this turn.
 - `tick` → one relay turn (see **Relay**). Normally only called by the loop that `boot` starts.
 - `ask <question>` → you are a worker; ask the user (see **Worker**).
 - `status` → print config summary (without the webhook URL), relay liveness, known sessions and open threads from the state file.
@@ -34,16 +34,34 @@ The Slack MCP posts *as the user*, and Slack never notifies anyone about their o
 
 ## Running the relay
 
-Use a dedicated terminal and pick the model when starting it:
+Use a dedicated terminal, name the session and pick the model when starting it:
 
 ```bash
-claude --model sonnet "/slack-relay boot"
+claude -n slack-relay --model sonnet "/slack-relay boot"
 ```
+
+A shell alias makes it one word: `alias slack-relay='claude -n slack-relay "/slack-relay boot"'`.
 
 - Routing free-form messages to the right session needs judgment, so use a capable model. `sonnet` is a good default; drop `--model` to use your default (e.g. Opus) if cost doesn't matter; `haiku` is fine if you always address sessions explicitly (`NRH-123: ...`). Any `--model` alias or full model ID works; inside a running session, `/model` switches it.
 - Polling intervals are in the config: `idle_poll_seconds` (default 270, min 60) and `hot_poll_seconds` (default 30, used within 5 min of any activity).
 - The relay only works while the machine is awake and that terminal is open. Closing the laptop pauses everything; on wake the loop continues and catches up on the channel.
 - To stop: interrupt the loop in that terminal (or tell it to stop the loop).
+
+## Session names
+
+Sessions address each other by name (`ListAgents` shows it, `SendMessage` uses it). A session gets its name in one of three ways (`nameSource` in `~/.claude/sessions/<pid>.json`):
+
+| Source | Example | When |
+|---|---|---|
+| `derived` | `code-89` | default for interactive sessions: cwd folder name + 2 characters of the session id |
+| `auto` | `slack-relay-status-tick` | background sessions get a title generated from their task |
+| set by the user | `slack-relay`, `NRH-123` | `claude -n <name>` at start, `/rename <name>` in the session, or `Ctrl+R` in the session picker |
+
+- A session **can't rename itself**: there's no tool for it, and `/rename` only works when the user types it. So the skill can only ask for a name, never set one.
+- The relay should be called `relay_name` (default `slack-relay`), so workers and the user can find it without the state file and its name doesn't change between restarts.
+- Work sessions are easiest to reach when named after their ticket: `claude -n NRH-123`. Then `NRH-123: ...` in Slack matches the session name directly.
+- If two live sessions share a name, `SendMessage` can't address them by name alone. The relay refuses to boot under a name that's already taken.
+- The relay's own name can still change: the user may `/rename` it, or its loop may move to a background session with an auto name. Each turn, compare your name from `ListAgents` with `state.relay.session`. If it changed, update the state and tell every registered session: `SLACK-RELAY: the relay is now <new name>; send all SLACK-RELAY messages there.`
 
 ## Files
 
@@ -61,6 +79,7 @@ claude --model sonnet "/slack-relay boot"
   "webhook_url": "https://hooks.slack.com/triggers/...",
   "webhook_message_field": "message",
   "own_prefix": ":claude:",
+  "relay_name": "slack-relay",
   "reminder_after_minutes": 120,
   "idle_poll_seconds": 270,
   "hot_poll_seconds": 30
@@ -196,7 +215,7 @@ Sessions don't need this skill, memory or CLAUDE.md to take part: the relay's `W
 **Asking the user** (blocked on a decision only the user can make; not for progress updates):
 
 1. Write a self-contained question: what you're working on (ticket key as `label`), the options, your recommendation, and what you'll do with each answer. The user will read it on a phone.
-2. Read `~/.claude/slack-relay/state.json`. If `relay.session` appears in `ListAgents` and its heartbeat is younger than 30 min, send it:
+2. Find the relay: `relay.session` from `~/.claude/slack-relay/state.json` if it appears in `ListAgents` with a heartbeat younger than 30 min, otherwise a live session named `relay_name` (from the config). Send it:
    ```
    SLACK-RELAY ASK label=<label>
    <question>
