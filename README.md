@@ -35,7 +35,7 @@ A full ticket-to-PR workflow triggered by saying "let's start the day" or `/star
 Reach you on your phone through Slack while you're away from the terminal, and route your answers back to the Claude Code sessions that asked.
 
 **What it does:**
-1. One dedicated session becomes the relay: `claude -n slack-relay "/slack-relay boot"` (the fixed name lets sessions find it; name work sessions after their ticket the same way, e.g. `claude -n NRH-123`)
+1. One dedicated session becomes the relay: `claude -n slack-relay "/slack-relay boot"`, or detached right away with `claude --bg -n slack-relay "/slack-relay boot"` (the fixed name lets sessions find it; name work sessions after their ticket the same way, e.g. `claude -n NRH-123`)
 2. The relay asks every running session what it's working on, keeps a registry of them, and tells each session how to reach you through it, so work sessions need no extra setup, memory or CLAUDE.md
 3. Worker sessions blocked on a decision send their question to the relay (`/slack-relay ask <question>`), or ping Slack directly if no relay is running
 4. The relay posts each question through a Slack webhook workflow, which @mentions you, so your phone gets a push (posts made through the Slack MCP appear as you and never notify you)

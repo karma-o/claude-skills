@@ -40,7 +40,13 @@ Use a dedicated terminal, name the session and pick the model when starting it:
 claude -n slack-relay --model sonnet "/slack-relay boot"
 ```
 
-A shell alias makes it one word: `alias slack-relay='claude -n slack-relay "/slack-relay boot"'`.
+Or start it detached right away, with no terminal to keep open (Claude Code's own background sessions; the `-n` name is kept):
+
+```bash
+cd ~/Code && claude --bg -n slack-relay "/slack-relay boot"
+```
+
+Manage it with `claude agents` (list), `claude attach <id>` (open it, e.g. to `/rename` or answer a permission prompt), `claude logs <id>`, `claude stop <id>`. The working directory must be one you've already trusted in an interactive `claude` session. A shell alias makes it one word: `alias slack-relay='cd ~/Code && claude --bg -n slack-relay "/slack-relay boot"'`.
 
 - Routing free-form messages to the right session needs judgment, so use a capable model. `sonnet` is a good default; drop `--model` to use your default (e.g. Opus) if cost doesn't matter; `haiku` is fine if you always address sessions explicitly (`NRH-123: ...`). Any `--model` alias or full model ID works; inside a running session, `/model` switches it.
 - Polling intervals are in the config: `idle_poll_seconds` (default 270, min 60) and `hot_poll_seconds` (default 30, used within 5 min of any activity).
