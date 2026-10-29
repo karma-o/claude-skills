@@ -2,7 +2,22 @@
 
 The steps for one relay turn. `boot` reads this file once; each loop tick then runs these steps from context. Re-read this file only if its steps are no longer in your context (e.g. after compaction). Config, state and message formats are described in `SKILL.md` next to this file.
 
-Each relay turn (a loop tick **or** an incoming peer message) does all of this, then ends with `ScheduleWakeup`. Steps 1–2 (`ListAgents`, session registry) run on **every** turn, including quiet ones; they're how new sessions get their `WHOAMI`. A quiet channel is no reason to skip them.
+Each relay turn (a loop tick **or** an incoming peer message) does all of this, then ends with `ScheduleWakeup`.
+
+## Notifying the user
+
+Every place below that says **notify** means this procedure, never a bare `ping.sh`:
+
+1. Run `scripts/present.sh <away_after_seconds>` (default 300). Exit 0 = the user touched the keyboard or mouse recently, so they're at the machine.
+2. **Present** → `say "<label>: <a few spoken words>"` (e.g. `say "NRH-123 has a question"`), then post the message via the Slack MCP as `<own_prefix> <message>`. That post doesn't buzz their phone. Mark the item `quiet: true`, `escalate_at: now + escalate_after_seconds` (default 300).
+3. **Away** (or `present.sh` exits 1) → `scripts/ping.sh "<own_prefix> <message>"`. The phone buzzes.
+4. **Escalation**, on every turn: a `quiet` item with no user reply after `escalate_at` gets one `ping.sh` pointing at it (`<own_prefix> <label> is still waiting — <thread link>`), then `quiet: false`. If the user is still present at that point, `say` once more first.
+
+For a new question the message becomes the thread root, so take `thread_ts` from whichever post created it: the MCP send result when present, or the bot message found in the channel after `ping.sh`.
+
+## Turn steps
+
+Steps 1–2 (`ListAgents`, session registry) run on **every** turn, including quiet ones; they're how new sessions get their `WHOAMI`. A quiet channel is no reason to skip them.
 
 1. **Claim / heartbeat.** Get your session name from `ListAgents` ("This session is ..."). If `state.relay.session` is another session with a heartbeat younger than 30 min and it still appears in `ListAgents`, stop: tell the user a relay is already running and end the loop. Otherwise write your name and the current time as the heartbeat.
 
@@ -25,12 +40,12 @@ Each relay turn (a loop tick **or** an incoming peer message) does all of this, 
 
 3. **Peer intake.** Handle each peer message received since the last turn:
    - `ASK label=<label>` → add a thread entry `kind: question`, `status: queued`, short random `id`.
-   - `REPLY thread=<ts>` → post the body in that thread via MCP as `<own_prefix> <label>: <reply>`. If the user's last message in that thread (`last_user_at`) is older than 10 min, also `ping.sh` a short pointer (`<own_prefix> <label> replied: <first line> — <thread link>`) so they get notified.
-   - `NOTIFY ping=<true|false>` → FYI: `ping.sh` it if `ping=true`, otherwise post top-level via MCP with `own_prefix` and the label.
+   - `REPLY thread=<ts>` → post the body in that thread via MCP as `<own_prefix> <label>: <reply>`. If the user's last message in that thread (`last_user_at`) is older than 10 min, also **notify** with a short pointer (`<own_prefix> <label> replied: <first line> — <thread link>`) so they get notified.
+   - `NOTIFY ping=<true|false>` → FYI: **notify** with it if `ping=true`, otherwise post top-level via MCP with `own_prefix` and the label.
    - `IAM` → see step 2.
 
 4. **Post queued questions.** For each `queued` question:
-   - `ping.sh "<own_prefix> [<id>] <label> (from <session>): <question>\nReply in this thread."`
+   - **Notify** with `[<id>] <label> (from <session>): <question>\nReply in this thread.`
    - Read the latest channel messages, find the bot message containing `[<id>]`, store its `ts` as `thread_ts`, set `status: open`, `posted_at`.
    - If ping fails (non-`ok`), keep it queued and tell the asking worker the relay can't reach Slack.
 
@@ -71,7 +86,7 @@ Each relay turn (a loop tick **or** an incoming peer message) does all of this, 
      ```
    - A thread reply `→ <session>` from the user re-routes that thread; forward its last message to the new session.
 
-7. **Reminders.** An `open` question unanswered for `reminder_after_minutes` and not yet `reminded` gets one `ping.sh` ("still waiting on [<id>] <label> — <thread link>"), then `reminded: true`.
+7. **Reminders.** An `open` question unanswered for `reminder_after_minutes` and not yet `reminded` gets one **notify** ("still waiting on [<id>] <label> — <thread link>"), then `reminded: true`.
 
 8. **Prune.** Close threads with no activity in 24 h; drop closed threads older than 48 h.
 

@@ -17,7 +17,7 @@ worker C ─┘                                           └─◄ polls channe
 
 Arguments: `$ARGUMENTS`
 
-- `boot` → start the relay: if `config.json` is missing, run **Setup** first. Then check the session name (see **Session names**): if `ListAgents` shows another live session already called `relay_name`, stop and tell the user; if this session isn't called `relay_name`, tell the user once to run `/rename <relay_name>` (you can't rename yourself) and carry on. Then Read `relay.md` (in this skill's base directory) and invoke the `loop` skill (Skill tool) with this plain-text prompt as args (not a slash command, so ticks don't reload the skill): `slack-relay tick: run one relay turn following relay.md (<absolute path to relay.md>; Read it only if its steps are no longer in your context). Every turn, never skip: (1) ListAgents → WHOAMI any new session, drop ended ones; (2) peer messages; (3) read the channel + open threads, forward user replies; (4) heartbeat; (5) ScheduleWakeup with this same prompt.` Do nothing else in this turn.
+- `boot` → start the relay: if `config.json` is missing, run **Setup** first. Then check the session name (see **Session names**): if `ListAgents` shows another live session already called `relay_name`, stop and tell the user; if this session isn't called `relay_name`, tell the user once to run `/rename <relay_name>` (you can't rename yourself) and carry on. Then Read `relay.md` (in this skill's base directory) and invoke the `loop` skill (Skill tool) with this plain-text prompt as args (not a slash command, so ticks don't reload the skill): `slack-relay tick: run one relay turn following relay.md (<absolute path to relay.md>; Read it only if its steps are no longer in your context). Every turn, never skip: (1) ListAgents → WHOAMI any new session, drop ended ones; (2) peer messages; (3) read the channel + open threads, forward user replies; (4) escalate quiet items past escalate_at to a phone ping; (5) heartbeat; (6) ScheduleWakeup with this same prompt. Notify = present.sh → say + quiet post, else ping.sh.` Do nothing else in this turn.
 - `tick` → one relay turn, following `relay.md`. Only for running a turn by hand; the loop that `boot` starts uses a short plain-text prompt instead.
 - `ask <question>` → you are a worker; ask the user (see **Worker**).
 - `status` → print config summary (without the webhook URL), relay liveness, known sessions and open threads from the state file.
@@ -27,7 +27,8 @@ Arguments: `$ARGUMENTS`
 
 The Slack MCP posts *as the user*, and Slack never notifies anyone about their own messages. Only messages posted by a different identity (the workflow bot behind the webhook) produce a push notification. Consequences:
 
-- Use `scripts/ping.sh` (relative to this skill's base directory) whenever the user must be **notified**. It posts a new top-level message and returns `{"ok":true}` on success. It can't post into a thread.
+- Before notifying, check whether the user is at the machine with `scripts/present.sh` (keyboard/mouse idle time, macOS). If they are, announce with `say` and post quietly; escalate to a phone ping only if they don't answer in time (details in `relay.md`, "Notifying the user").
+- Use `scripts/ping.sh` (relative to this skill's base directory) whenever the user must be **notified on their phone**. It posts a new top-level message and returns `{"ok":true}` on success. It can't post into a thread.
 - Use the Slack MCP for everything else (thread replies, acks, status). Those posts don't notify, so they must start with `own_prefix` so the user can tell them apart from their own messages.
 - A message from the user is any message whose author is `user_id` and whose text does not start with `own_prefix`.
 - Nothing notifies Claude about Slack activity; the relay has to poll.
@@ -87,6 +88,8 @@ Sessions address each other by name (`ListAgents` shows it, `SendMessage` uses i
   "own_prefix": ":claude:",
   "relay_name": "slack-relay",
   "reminder_after_minutes": 120,
+  "away_after_seconds": 300,
+  "escalate_after_seconds": 300,
   "idle_poll_seconds": 270,
   "hot_poll_seconds": 30
 }
@@ -144,7 +147,7 @@ Sessions don't need this skill, memory or CLAUDE.md to take part: the relay's `W
    <question>
    ```
    Then end your turn; continue other unblocked work first if there is any. The answer arrives as a `SLACK-RELAY ANSWER` message.
-3. **No live relay → direct mode.** Post with `scripts/ping.sh "<own_prefix> <label>: <question>\nReply in this thread."`, find the bot message's `ts` in the channel, then poll that thread (background `sleep 270`, then `slack_read_thread`) until a user reply arrives.
+3. **No live relay → direct mode.** If `scripts/present.sh` says the user is at the machine, `say` that you have a question and ask in the terminal first; fall back to Slack if there's no answer within a few minutes. Otherwise post with `scripts/ping.sh "<own_prefix> <label>: <question>\nReply in this thread."`, find the bot message's `ts` in the channel, then poll that thread (background `sleep 270`, then `slack_read_thread`) until a user reply arrives.
 
 **Receiving from the relay:**
 
