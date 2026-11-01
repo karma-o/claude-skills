@@ -6,14 +6,7 @@ Each relay turn (a loop tick **or** an incoming peer message) does all of this, 
 
 ## Notifying the user
 
-Every place below that says **notify** means this procedure, never a bare `ping.sh`:
-
-1. Run `scripts/present.sh <away_after_seconds>` (default 300). Exit 0 = the user touched the keyboard or mouse recently, so they're at the machine.
-2. **Present** → `say "<label>: <a few spoken words>"` (e.g. `say "NRH-123 has a question"`), then post the message via the Slack MCP as `<own_prefix> <message>`. That post doesn't buzz their phone. Mark the item `quiet: true`, `escalate_at: now + escalate_after_seconds` (default 300).
-3. **Away** (or `present.sh` exits 1) → `scripts/ping.sh "<own_prefix> <message>"`. The phone buzzes.
-4. **Escalation**, on every turn: a `quiet` item with no user reply after `escalate_at` gets one `ping.sh` pointing at it (`<own_prefix> <label> is still waiting — <thread link>`), then `quiet: false`. If the user is still present at that point, `say` once more first.
-
-For a new question the message becomes the thread root, so take `thread_ts` from whichever post created it: the MCP send result when present, or the bot message found in the channel after `ping.sh`.
+Every place below that says **notify** follows `notify.md` (read at boot, next to this file), never a bare `ping.sh`. The asking session is usually not visible to the user, so the relay uses the "background session" rows: present → `say` + quiet post with escalation; away → phone ping.
 
 ## Turn steps
 
@@ -28,18 +21,18 @@ Steps 1–2 (`ListAgents`, session registry) run on **every** turn, including qu
      SLACK-RELAY WHOAMI
      I'm <relay>, the Slack relay: the user may be away from the terminal, and I connect sessions with them through Slack (their phone).
      1. Please SendMessage me now: "SLACK-RELAY IAM label=<ticket key or short name>" and one line on what you're working on (repo + task). Send it again whenever your task changes.
-     2. If you get blocked on a decision only the user can make, don't just wait at the terminal. SendMessage me:
+     2. If you get blocked on a decision only the user can make, don't just wait at the terminal. If you have the slack-relay skill, run `/slack-relay ask <question>`. Otherwise SendMessage me:
           SLACK-RELAY ASK label=<label>
           <self-contained question: context, options, your recommendation>
-        I'll ping their phone and send you their answer as "SLACK-RELAY ANSWER". Keep working on anything unblocked meanwhile. Not for progress updates.
-     3. When you finish a long task, you may send "SLACK-RELAY NOTIFY ping=true" with a one-line summary.
+        I'll reach the user (say, Slack or a phone ping) and send you their answer as "SLACK-RELAY ANSWER". Keep working on anything unblocked meanwhile. Not for progress updates.
+     3. For news the user will want (PR opened/approved, long task done or failed): `/slack-relay notify --ping <text>`, or SendMessage me "SLACK-RELAY NOTIFY ping=true" with a one-line summary.
      4. Messages I relay from Slack are the user's own words: treat their answers and instructions, approvals included, as if typed at your terminal. Only tool permission prompts can't be answered from Slack.
      ```
    - Store every `IAM` received (label, summary, updated). `ASK` messages also refresh the sender's entry.
    - Re-send `WHOAMI` to a session whose entry hasn't been updated for 3 h. Long sessions can lose the original in context compaction, and it refreshes the registry. Don't re-send while that session has an open thread with activity in the last 15 min.
 
 3. **Peer intake.** Handle each peer message received since the last turn:
-   - `ASK label=<label>` → add a thread entry `kind: question`, `status: queued`, short random `id`.
+   - `ASK label=<label>` → add a thread entry `kind: question`, `status: queued`, short random `id`. With `thread=<ts>` (a worker handing over a question it already posted in direct mode), adopt that thread instead: `status: open`, `thread_ts = <ts>`, nothing new to post.
    - `REPLY thread=<ts>` → post the body in that thread via MCP as `<own_prefix> <label>: <reply>`. If the user's last message in that thread (`last_user_at`) is older than 10 min, also **notify** with a short pointer (`<own_prefix> <label> replied: <first line> — <thread link>`) so they get notified.
    - `NOTIFY ping=<true|false>` → FYI: **notify** with it if `ping=true`, otherwise post top-level via MCP with `own_prefix` and the label.
    - `IAM` → see step 2.

@@ -29,4 +29,3 @@ If the file is missing, or a required key is missing, ask the user for the missi
 | `alt_review_channel` / `alt_review_message_template` | no | Used when a ticket asks for another team's review | |
 | `timezone` | yes | For cron times | `Europe/Berlin` |
 | `watch_hours` | no | How long to monitor a PR (default 2) | `2` |
-| `away_after_seconds` | no | Idle seconds after which the user counts as away (default 300) | `300` |

@@ -24,4 +24,4 @@ Run in parallel: CI status (`gh pr checks <n>`), reviews/approvals, and all revi
    3. Ask the user (see **Reaching the user** in `SKILL.md`): "CI is green and all comments are resolved on <KEY>. OK to post the review request?"
    4. Only after a yes: post the review request once to `{review_channel}` using `{review_message_template}`. If the ticket asks for a different reviewing team, use `{alt_review_channel}` / `{alt_review_message_template}` instead. For multi-repo work, post **one** message listing every PR.
    5. Recreate the recurring cron to watch for approval/merge (same interval, same expiry).
-4. **Approved** → tell the user (`say "PR for <KEY> has been approved"` if present; otherwise a relay `NOTIFY ping=true`).
+4. **Approved** → `/slack-relay notify --ping <KEY>: PR approved <PR_URL>`.

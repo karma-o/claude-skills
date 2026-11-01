@@ -25,7 +25,7 @@ Keep passes small. This session runs all day, and everything a pass reads stays 
 
 7. **Worker messages.** On `START-OF-DAY PR-OPEN` or `BLOCKED` from a worker, run steps 1–6 again right away; that's how a freed slot gets reused without waiting for the next hourly pass. Nothing else is needed for them.
 
-8. **Report problems only.** Starting sessions needs no message: each `start-of-day` session tells the user about its own pickup and plan. Tell the user only about problems that stop the autopilot from working: a failed session start, an MCP/CLI auth error, a config file that's missing or broken. Use `slack-relay` (`NOTIFY ping=true`) if a relay is running, otherwise `say` plus a terminal message. Report each distinct problem once, not on every pass while it lasts.
+8. **Report problems only.** Starting sessions needs no message: each `start-of-day` session tells the user about its own pickup and plan. Tell the user only about problems that stop the autopilot from working: a failed session start, an MCP/CLI auth error, a config file that's missing or broken. Use `/slack-relay notify --ping <text>`; if that skill isn't installed, print it in the terminal. Report each distinct problem once, not on every pass while it lasts.
 
 9. **Schedule.** `ScheduleWakeup` with the same plain-text prompt the loop was started with and `delaySeconds: <interval_seconds>`. Mark `noop: true` if the pass started nothing and found no new problems.
 

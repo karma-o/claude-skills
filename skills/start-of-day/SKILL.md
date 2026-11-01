@@ -20,13 +20,14 @@ Read `~/.claude/start-of-day/config.json`. If it's missing or lacks a key, read 
 
 ## Reaching the user
 
-The user may be at the terminal or away. Decide each time you need them:
+Use the `slack-relay` skill for every question and notification. It works out whether the user is at the machine, uses `say`, Slack or a phone ping, escalates if there's no answer, and works with or without a running relay:
 
-1. **At the machine?** `ioreg -c IOHIDSystem | awk '/HIDIdleTime/ {print int($NF/1000000000); exit}'` gives seconds since the last keyboard/mouse input. Below `{away_after_seconds}` (default 300) → treat the user as present.
-2. **Present** → announce with `say "<short text>"` and ask in the terminal.
-3. **Away** → use the `slack-relay` skill's worker flow (an `ASK` or `NOTIFY` to the relay, or its direct mode if no relay is running). If that skill isn't available, ask in the terminal and wait.
+- `/slack-relay ask <question>` when you need a decision (label it with the item's key).
+- `/slack-relay notify [--ping] <text>` for news: picked up, PR open, approved.
 
-When an item is **picked up while the user is away**: ping once with the item and a one-line summary, then post the plan as a reply in the same thread. If the plan has no open questions, carry on without waiting. If it has questions, ask them there and work on anything not blocked by them meanwhile.
+If that skill isn't installed, ask in the terminal and wait.
+
+**When you pick up an item:** if the plan has open questions, send one `ask` with the item, a one-line summary, the plan and the questions, and work on anything not blocked by them meanwhile. Otherwise send `notify --ping` with the item and the plan, and carry on without waiting.
 
 ## Step 1 — Pick the work
 
