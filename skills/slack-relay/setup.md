@@ -38,7 +38,7 @@ Run when `config.json` is missing or the user asks for `setup`. The config forma
    "Bash(<dir>/scripts/ping.sh *)",
    "Bash(<dir>/scripts/present.sh *)",
    "Bash(<dir>/scripts/state.sh *)",
-   "Bash(jq *)", "Bash(sleep *)", "Bash(say *)", "Bash(claude agents *)"
+   "Bash(jq *)", "Bash(sleep *)", "Bash(say *)", "Bash(claude agents *)", "Bash(lux *)"
    ```
    If their Slack tools have a different prefix (check the tool names), adjust the `mcp__…` rules. The plugin directory changes when the plugin updates, so rerun this step after an update.
 7. Inform the user of the polling intervals: `idle_poll_seconds` (default 270, min 60) and `hot_poll_seconds` (default 30, used within 5 min of any activity). Ask if they would like to tweak them. Closing the laptop pauses everything.

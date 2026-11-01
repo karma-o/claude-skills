@@ -14,6 +14,7 @@ allowed-tools:
   - Bash(sleep *)
   - Bash(say *)
   - Bash(claude agents *)
+  - Bash(lux *)
   - Write(~/.claude/slack-relay/**)
   - Edit(~/.claude/slack-relay/**)
   - Read(~/.claude/slack-relay/**)

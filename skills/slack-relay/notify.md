@@ -15,6 +15,8 @@ The single procedure for reaching the user. Scripts are in `${CLAUDE_SKILL_DIR}/
 | Present, session in the background | `say "<label>: <a few words>"`, then post the message to the channel via the Slack MCP as `<own_prefix> <message>`. This post doesn't buzz the phone. Mark it `quiet`, with `escalate_at = now + escalate_after_seconds`. |
 | Away (or presence unknown) | `${CLAUDE_SKILL_DIR}/scripts/ping.sh "<own_prefix> <message>"`. The workflow bot @mentions the user, so the phone buzzes. |
 
+**Home lights (local only).** If `command -v lux` succeeds and it's not between 23:00 and 08:00 local time, also run `lux alert -c <color>` in the background (`lux -q alert … &`) whenever you `say` or `ping.sh` something new. That covers a user who is at home but away from the desk. Colours: `orange` = question waiting, `red` = blocked or failed, `green` = done, `blue` = FYI. Once per event, never on escalation repeats.
+
 **Thread roots:** a new question becomes the root of its thread. Take `thread_ts` from the post that created it: the MCP send result for a quiet post, or, after `ping.sh`, the bot message containing the question's `[<id>]`, found by reading the latest channel messages.
 
 ## 3. Escalate
