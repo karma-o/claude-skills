@@ -68,13 +68,15 @@ Reach you on your phone through Slack while you're away from the terminal, and r
 
 ## Installation
 
-**As a plugin** (all skills, auto-updated from GitHub):
+**As a plugin** (all skills):
 
 ```
 /plugin install dev-workflow --marketplace karma-o/claude-skills
 ```
 
 Skills installed this way are namespaced: `/dev-workflow:start-of-day`, `/dev-workflow:slack-relay boot`, etc.
+
+The plugin has no `version`, so every commit pushed to `main` is a new version. Third-party marketplaces don't auto-update by default: turn it on in `/plugin` → Marketplaces → `personal-skills` → Enable auto-update (it then pulls at startup), or update by hand with `claude plugin marketplace update personal-skills && claude plugin update dev-workflow@personal-skills` and restart.
 
 **Single skill, from a local clone** (unprefixed names, edits take effect immediately):
 
