@@ -1,6 +1,6 @@
 # Notifying the user
 
-The single procedure for reaching the user. The relay uses it for everything it sends. Workers use it in direct mode, when no relay is running. Other skills don't implement their own; they call `/slack-relay ask` or `/slack-relay notify`, which come here.
+The single procedure for reaching the user. Scripts are in `${CLAUDE_SKILL_DIR}/scripts/` (the folder this file is in); always run them by that full path. The relay uses it for everything it sends. Workers use it in direct mode, when no relay is running. Other skills don't implement their own; they call `/slack-relay ask` or `/slack-relay notify`, which come here.
 
 ## 1. Where is the user?
 

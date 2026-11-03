@@ -1,6 +1,6 @@
 # Slack Relay: relay turn
 
-The steps for one relay turn. `boot` reads this file once; each loop tick then runs these steps from context. Re-read this file only if its steps are no longer in your context (e.g. after compaction). The config format and ground rules are in `SKILL.md` next to this file; the state format is at the end of this one.
+The steps for one relay turn. `boot` reads this file once; each loop tick then runs these steps from context. Re-read this file only if its steps are no longer in your context (e.g. after compaction). The config format and ground rules are in `SKILL.md` next to this file; the state format is at the end of this one. `${CLAUDE_SKILL_DIR}` means the folder this file is in. Run every script (`ping.sh`, `present.sh`, `state.sh`) by its full path in that folder's `scripts/`, which is what the permission rules match.
 
 Each relay turn (a loop tick **or** an incoming peer message) does all of this, then ends with `ScheduleWakeup`.
 
