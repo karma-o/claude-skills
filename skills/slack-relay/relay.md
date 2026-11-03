@@ -83,14 +83,14 @@ Steps 1–2 (`ListAgents`, session registry) run on **every** turn, including qu
    - A thread reply `→ <session>` from the user re-routes that thread; forward its last message to the new session.
 
 7. **Escalations and reminders.**
-   - Each thread with `quiet: true` and `escalate_at` in the past (no user reply since, or step 5 would have cleared it): if `scripts/present.sh` says the user is still at the machine, `say` once more; then `ping.sh "<own_prefix> <label> is still waiting — <thread link>"` and set `quiet: false`. If the ping fails, keep `quiet: true` and retry next turn.
+   - Each thread with `quiet: true` and `escalate_at` in the past (no user reply since, or step 5 would have cleared it): if `${CLAUDE_SKILL_DIR}/scripts/present.sh` says the user is still at the machine, `say` once more; then `ping.sh "<own_prefix> <label> is still waiting — <thread link>"` and set `quiet: false`. If the ping fails, keep `quiet: true` and retry next turn.
    - An `open` question unanswered for `reminder_after_minutes` and not yet `reminded` gets one **notify** ("still waiting on [<id>] <label> — <thread link>"), then `reminded: true`.
 
 8. **Prune.** Close threads with no activity in 24 h; drop closed threads older than 48 h.
 
 **Keep turns small** (the relay runs for hours; everything a turn reads stays in context):
 - Use `response_format: concise` for Slack reads, always with `oldest` set and a small `limit`.
-- Change `state.json` only through `scripts/state.sh [jq options] '<filter>'` (one atomic in-place `jq` update per call, e.g. `state.sh --arg ts "$ts" '.channel_cursor = $ts'`). Read it with `jq '<path>' ~/.claude/slack-relay/state.json`; don't print the whole file unless you need it.
+- Change `state.json` only through `${CLAUDE_SKILL_DIR}/scripts/state.sh [jq options] '<filter>'` (one atomic in-place `jq` update per call, e.g. `state.sh --arg ts "$ts" '.channel_cursor = $ts'`). Read it with `jq '<path>' ~/.claude/slack-relay/state.json`; don't print the whole file unless you need it.
 - On a no-op turn, say nothing beyond the `ScheduleWakeup` call.
 
 9. **Hot mode.** If anything was posted in the channel in the last 5 min (a user message, a forwarded `REPLY`, or a question you just posted), the conversation is live, so don't end the turn yet. Loop inside this turn:
@@ -107,7 +107,7 @@ Relay rules:
 
 ## State
 
-`state.json` (only the relay writes it, always through `scripts/state.sh`):
+`state.json` (only the relay writes it, always through `${CLAUDE_SKILL_DIR}/scripts/state.sh`):
 
 ```json
 {

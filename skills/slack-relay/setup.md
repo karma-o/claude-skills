@@ -10,7 +10,7 @@ Run when `config.json` is missing or the user asks for `setup`. The config forma
    - Slack → Workflow Builder → New workflow → trigger **From a webhook**, add a text variable (e.g. `message`).
    - Step **Send a message to a channel** → the relay channel, text: `@<user> {message}`.
    - Publish (suggest making the workflow private first) and copy the `https://hooks.slack.com/triggers/...` URL.
-4. Write the config with `umask 077`, then `chmod 600` it (`umask` doesn't tighten a file that already exists when setup is rerun). Then send a test with `scripts/ping.sh "<own_prefix> slack-relay test ping, reply in the thread"` and confirm with the user that the phone buzzed and that you can read their thread reply.
+4. Write the config with `umask 077`, then `chmod 600` it (`umask` doesn't tighten a file that already exists when setup is rerun). Then send a test with `${CLAUDE_SKILL_DIR}/scripts/ping.sh "<own_prefix> slack-relay test ping, reply in the thread"` and confirm with the user that the phone buzzed and that you can read their thread reply.
 5. Suggest the user add shortcuts to `~/.zshrc` for convenience (`slack-relay-stop` uses zsh-only syntax, so it won't work in bash):
    ```zsh
    # Start the slack-relay Claude Code session in the background (run from a trusted dir)
