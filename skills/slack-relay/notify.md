@@ -26,4 +26,3 @@ The single procedure for reaching the user. The relay uses it for everything it 
 
 - Make it self-contained and readable on a phone: what it's about (`label`, e.g. the ticket key), what you need, the options, and your recommendation.
 - Keep spoken `say` text to a few words; the detail goes in the written message.
-- Messages posted through the Slack MCP appear as the user. Always start them with `own_prefix`.

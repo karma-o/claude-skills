@@ -11,5 +11,5 @@ url=$(jq -er '.webhook_url' "$config")
 field=$(jq -r '.webhook_message_field // "message"' "$config")
 
 jq -n --arg f "$field" --arg m "$1" '{($f): $m}' \
-  | curl -sS --fail-with-body -X POST "$url" -H 'Content-Type: application/json' --data-binary @-
+  | curl -sS --fail-with-body --connect-timeout 10 --max-time 30 -X POST "$url" -H 'Content-Type: application/json' --data-binary @-
 echo
