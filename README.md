@@ -64,7 +64,11 @@ Reach you on your phone through Slack while you're away from the terminal, and r
 5. Any session reaches you with `/slack-relay ask <question>` or `/slack-relay notify [--ping] <text>`, whether or not a relay is running. With a relay, the relay tracks the thread. Without one, the session posts to Slack itself and checks for your reply for a while. How you're told depends on where you are: `say` (plus the terminal for interactive sessions) if you're at the machine, a quiet post that escalates to a phone ping if you don't answer, or a phone ping straight away if you're away. All of this lives in `notify.md`.
 6. It reads the channel and threads every ~5 min by default (configurable down to 1 min), and forwards your messages verbatim. Within 5 min of any new message from you or a session, it switches to checking every 30 s, so a live back-and-forth stays quick. Thread replies go to whoever owns the thread. New top-level messages are routed by an explicit `NRH-123: ...` / `code-b5: ...` prefix, or by matching the content against the registry; if it's unclear, the relay asks you which session you mean. Sessions reply through the relay into the same thread. You can also ask for `status`
 
-**First-time setup:** `/slack-relay setup` asks for the channel and the webhook URL, and walks you through creating the webhook workflow in Slack Workflow Builder. Config lives in `~/.claude/slack-relay/config.json` (chmod 600, since the webhook URL is a secret).
+**First-time setup:** create the relay channel in Slack first (a private one with only you in it; the Slack MCP can't create channels). Then `/slack-relay setup` finds the channel, asks for the webhook URL, walks you through creating the webhook workflow in Slack Workflow Builder, and suggests `~/.zshrc` shortcuts to start and stop the relay. Config lives in `~/.claude/slack-relay/config.json` (chmod 600, since the webhook URL is a secret).
+
+**Design notes:**
+- The webhook could DM you each message instead of posting to a channel, which would feel more like a real conversation and notify on every message. But DMs from a workflow can't use threads, and threads are what keep each session's conversation separate, so the channel is the compromise.
+- The relay could be lighter on context by moving more of the routing and thread tracking into scripts and state files, so the relay session has less to work out by thinking.
 
 ## Installation
 
@@ -74,7 +78,7 @@ Reach you on your phone through Slack while you're away from the terminal, and r
 /plugin install dev-workflow --marketplace karma-o/claude-skills
 ```
 
-Skills installed this way are namespaced: `/dev-workflow:start-of-day`, `/dev-workflow:slack-relay boot`, etc.
+Skills installed this way also get a namespaced form (`/dev-workflow:start-of-day`, `/dev-workflow:slack-relay boot`); the bare names work too unless another skill has the same name.
 
 The plugin has no `version`, so every commit pushed to `main` is a new version. Third-party marketplaces don't auto-update by default: turn it on in `/plugin` → Marketplaces → `personal-skills` → Enable auto-update (it then pulls at startup), or update by hand with `claude plugin marketplace update personal-skills && claude plugin update dev-workflow@personal-skills` and restart.
 

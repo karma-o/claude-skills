@@ -124,14 +124,35 @@ Only the relay writes `state.json`. Workers only read `relay` from it.
 
 Run when `config.json` is missing or the user asks for `setup`.
 
-1. Ask the user for: channel ID, webhook URL, payload field name (default `message`). Take `user_id` from the Slack MCP tool descriptions ("Current logged in user's user_id is ..."); confirm it.
-2. If they don't have a webhook workflow yet, walk them through it:
+1. Check the prerequisites:
+   - **Slack MCP.** The skill needs the official Slack MCP (`slack_read_channel`, `slack_read_thread`, `slack_send_message`, `slack_add_reaction`). If those tools aren't available, tell the user to install the `slack` plugin from the official marketplace (`/plugin install slack@claude-plugins-official`), restart Claude Code and authenticate.
+   - **Channel.** The Slack MCP can't create channels, so the user creates one in Slack: a private channel with only themselves in it works best. Look its ID up with `slack_search_channels` (`channel_types: private_channel`) and confirm it, or ask for the ID (channel details → About).
+2. Ask the user for: webhook URL, payload field name (default `message`). Take `user_id` from the Slack MCP tool descriptions ("Current logged in user's user_id is ..."); confirm it.
+3. If they don't have a webhook workflow yet, walk them through it:
    - Slack → Workflow Builder → New workflow → trigger **From a webhook**, add a text variable (e.g. `message`).
    - Step **Send a message to a channel** → the relay channel, text: `@<user> {message}`.
-   - Publish and copy the `https://hooks.slack.com/triggers/...` URL.
-   - Known dead ends: emoji-reaction and message-posted triggers ignore actions taken through the Slack MCP; keyword triggers are often disabled for private channels; link triggers (`slack.com/shortcuts/...`) need a human click inside Slack.
-3. Write the config with `umask 077`, then send a test with `scripts/ping.sh "<own_prefix> slack-relay test ping, reply in the thread"` and confirm with the user that the phone buzzed and that you can read their thread reply.
-
+   - Publish (suggest making the workflow private first) and copy the `https://hooks.slack.com/triggers/...` URL.
+4. Write the config with `umask 077`, then send a test with `scripts/ping.sh "<own_prefix> slack-relay test ping, reply in the thread"` and confirm with the user that the phone buzzed and that you can read their thread reply.
+5. Suggest the user add shortcuts to `~/.zshrc` for convenience (`slack-relay-stop` uses zsh-only syntax, so it won't work in bash):
+   ```zsh
+   # Start the slack-relay Claude Code session in the background (run from a trusted dir)
+   alias slack-relay='claude --bg -n slack-relay "/slack-relay boot"'
+   
+   # Stop the slack-relay session. With --workers, also stop idle ticket/incident sessions.
+   slack-relay-stop() {
+   local agents
+   agents=$(claude agents --json 2>/dev/null) || return
+   local -a targets=(slack-relay)
+   [[ "$1" == "--workers" ]] && targets+=( ${(f)"$(jq -r '.[] | select(.status=="idle" and (.name|test("^([A-Z][A-Z0-9]+-[0-9]+|INC[0-9]+)$"))) | .name' <<<"$agents")"} )
+   local name id
+   for name in $targets; do
+   id=$(jq -r --arg n "$name" '.[] | select(.name==$n) | .sessionId[:8]' <<<"$agents" | head -1)
+   if [[ -n "$id" ]]; then claude stop "$id" >/dev/null && echo "stopped $name"; else echo "$name not running"; fi
+   done
+   }
+   ```
+6. Inform the user of the polling intervals: `idle_poll_seconds` (default 270, min 60) and `hot_poll_seconds` (default 30, used within 5 min of any activity). Ask if they would like to tweak them. Closing the laptop pauses everything.
+   
 ## Relay
 
 The per-turn steps live in `relay.md` next to this file, so each loop tick doesn't reload this whole skill into context (it's ~19 KB; at one tick a minute that filled the relay's context within hours).
